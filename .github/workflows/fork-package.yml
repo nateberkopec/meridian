@@ -30,7 +30,13 @@ jobs:
           bun-version: '1.4.0'
       - run: bun install --frozen-lockfile
       - run: node scripts/repro-sdk-ping-idle.mjs
-      - run: npm test
+      - name: Test each file in a separate process
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test_file in src/__tests__/*.test.ts; do
+            bun test --timeout 30000 "$test_file"
+          done
       - run: npm run build
       - name: Stage an installed package
         shell: bash
@@ -52,7 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           version=$(node -p 'require("./package.json").version')
-          tar -czf "meridian-${version}-${PLATFORM}.tar.gz" -C package-stage package.json package-lock.json bin dist assets plugin node_modules
+          tar -czf "meridian-${version}-${PLATFORM}.tar.gz" -C package-stage package.json package-lock.json README.md bin dist assets plugin node_modules
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: meridian-${{ matrix.platform }}
