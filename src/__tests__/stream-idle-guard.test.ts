@@ -124,6 +124,61 @@ describe("guardUpstreamIdle", () => {
     expect(returned).toBe(true)
   })
 
+  it("does not let SDK stream pings extend the idle deadline", async () => {
+    const src = makeSource<{ type: string; event?: { type: string } }>()
+    const clock = makeFakeClock()
+    const stalls: number[] = []
+    const output: unknown[] = []
+    let error: unknown
+    const pending = (async () => {
+      for await (const message of guardUpstreamIdle(src.iterable, 90, ms => stalls.push(ms), clock.clock)) output.push(message)
+    })().catch(caught => { error = caught })
+    try {
+      await clock.waitForScheduled(1)
+      for (let i = 0; i < 2; i++) {
+        clock.advance(30)
+        src.push({ type: "stream_event", event: { type: "ping" } })
+        await clock.waitForScheduled(i + 2)
+      }
+      clock.advance(30)
+      await new Promise<void>(resolve => setImmediate(resolve))
+      expect(error).toBeInstanceOf(UpstreamIdleError)
+      expect(stalls).toEqual([90])
+      expect(output).toEqual([])
+    } finally {
+      src.finish()
+      await pending
+    }
+  })
+
+  it("resets the deadline for model progress between pings", async () => {
+    const src = makeSource<{ type: string; event: { type: string } }>()
+    const clock = makeFakeClock()
+    const content = { type: "stream_event", event: { type: "content_block_delta" } }
+    const output: unknown[] = []
+    let error: unknown
+    const pending = (async () => {
+      for await (const message of guardUpstreamIdle(src.iterable, 90, undefined, clock.clock)) output.push(message)
+    })().catch(caught => { error = caught })
+    try {
+      await clock.waitForScheduled(1)
+      clock.advance(60)
+      src.push(content)
+      await clock.waitForScheduled(2)
+      clock.advance(60)
+      src.push({ type: "stream_event", event: { type: "ping" } })
+      await clock.waitForScheduled(3)
+      expect(error).toBeUndefined()
+      clock.advance(30)
+      await new Promise<void>(resolve => setImmediate(resolve))
+      expect(error).toBeInstanceOf(UpstreamIdleError)
+      expect(output).toEqual([content])
+    } finally {
+      src.finish()
+      await pending
+    }
+  })
+
   it("idleMs<=0 disables the guard (pure pass-through)", async () => {
     const src = makeSource<number>()
     const out: number[] = []

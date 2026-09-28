@@ -1,0 +1,60 @@
+name: Fork packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            platform: linux-x64
+          - runner: macos-latest
+            platform: darwin-arm64
+          - runner: macos-15-intel
+            platform: darwin-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22.22.3'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.0'
+      - run: npm ci
+      - run: node scripts/repro-sdk-ping-idle.mjs
+      - run: npm test
+      - run: npm run build
+      - name: Stage an installed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir package-stage
+          npm pack --ignore-scripts --pack-destination package-stage
+          tar -xzf package-stage/*.tgz -C package-stage --strip-components=1
+          cp package-lock.json package-stage/package-lock.json
+          npm ci --omit=dev --prefix package-stage
+          printf '#!/usr/bin/env node\nimport "../dist/cli.js";\n' > package-stage/bin/meridian
+          chmod +x package-stage/bin/meridian
+          ln -s meridian package-stage/bin/claude-max-proxy
+          package-stage/bin/meridian --version
+      - name: Archive the installed package
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          tar -czf "meridian-${version}-${PLATFORM}.tar.gz" -C package-stage package.json package-lock.json bin dist assets plugin node_modules
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: meridian-${{ matrix.platform }}
+          path: meridian-*.tar.gz
+          retention-days: 7
