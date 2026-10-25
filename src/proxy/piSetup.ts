@@ -3,7 +3,8 @@
  *
  * `meridian setup --client pi` copies the extension source shipped in
  * `plugin/pi/` into Pi's user extensions directory, where Pi loads it as
- * `extensions/meridian/index.ts`. The copy is replaced wholesale on every run.
+ * `extensions/meridian/index.ts`. A copy Meridian wrote is replaced wholesale
+ * on every run; anything else at that path is moved aside first.
  *
  *   - `meridian setup --client pi` — installs the extension
  *   - `meridian` startup          — warns if it is missing or out of date
@@ -151,8 +152,14 @@ export function installPiExtension(
     } else {
       rmSync(target, { recursive: true, force: true })
     }
-    renameSync(staging, target)
-    ensurePriorityAttestationKey()
+    try {
+      renameSync(staging, target)
+      ensurePriorityAttestationKey()
+    } catch (error) {
+      if (!backupPath) throw error
+      const reason = error instanceof Error ? error.message : String(error)
+      throw new Error(`Pi extension setup failed after moving ${target} to ${backupPath}: ${reason}`, { cause: error })
+    }
     return backupPath ? { extensionPath: target, replaced, backupPath } : { extensionPath: target, replaced }
   } finally {
     rmSync(staging, { recursive: true, force: true })
@@ -211,8 +218,8 @@ export function clearPluginlessPiWarning(): void {
  *
  * That is the shape of Pi pointed at Meridian through `models.json` without
  * the extension. Every request then falls back to fingerprint matching, side
- * calls and children share the primary model tier, and priority failback can
- * never move the conversation. Oh My Pi (body session ID) and orchestrators
+ * calls bind to the conversation, children share the primary model tier, and
+ * priority failback can never move the conversation. Oh My Pi (body session ID) and orchestrators
  * that supply their own affinity key are not affected.
  *
  * Returns the message to log, or undefined when there is nothing to say.
@@ -225,8 +232,9 @@ export function notePluginlessPiRequest(input: {
   pluginlessPiWarned = true
   return (
     "Pi request without a session identity: the Meridian Pi extension is not installed. " +
-    "Meridian falls back to fingerprint matching, cannot give side calls and subagents " +
-    "the base model tier, and cannot apply next-user-turn priority failback. " +
+    "Meridian falls back to fingerprint matching, cannot keep side calls out of the " +
+    "conversation or give subagents the base model tier, and cannot apply " +
+    "next-user-turn priority failback. " +
     "Fix: meridian setup --client pi, then select a model under the meridian provider."
   )
 }

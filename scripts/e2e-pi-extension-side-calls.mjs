@@ -7,7 +7,7 @@
 //
 // Usage: bun scripts/e2e-pi-extension-side-calls.mjs [--pi=/path/to/pi]
 import assert from "node:assert/strict"
-import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
@@ -20,7 +20,14 @@ const configDir = join(root, "meridian-config")
 process.env.MERIDIAN_CONFIG_DIR = configDir
 delete process.env.MERIDIAN_OPENCODE_ATTESTATION_KEY
 
-const env = { ...process.env, PI_CODING_AGENT_DIR: agentDir, MERIDIAN_CONFIG_DIR: configDir, PATH: `${dirname(pi)}:${process.env.PATH}` }
+const env = {
+  ...process.env,
+  PI_CODING_AGENT_DIR: agentDir,
+  MERIDIAN_CONFIG_DIR: configDir,
+  PI_TELEMETRY: "0",
+  PI_SKIP_VERSION_CHECK: "1",
+  PATH: `${dirname(pi)}:${process.env.PATH}`,
+}
 for (const key of Object.keys(env)) {
   if (key.startsWith("ANTHROPIC_") || key === "PI_SUBAGENT_CHILD" || key === "MERIDIAN_SOURCE" || key === "PI_OFFLINE") delete env[key]
 }
@@ -136,7 +143,10 @@ try {
   }
 } finally {
   child.kill()
+  await child.exited
   stub.stop(true)
+  // The scratch Meridian config holds a generated attestation key.
+  rmSync(root, { recursive: true, force: true })
 }
 console.log(JSON.stringify(report, null, 2))
 

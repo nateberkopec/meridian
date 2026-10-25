@@ -119,6 +119,22 @@ describe("Pi extension installation", () => {
     expect(isPiExtensionOutdated(PLUGIN_ROOT, agentDirectory)).toBe(false)
   })
 
+  test("names the backup when setup fails after moving a directory aside", () => {
+    const target = piExtensionDirectory(agentDirectory)
+    mkdirSync(target, { recursive: true })
+    writeFileSync(join(target, "index.ts"), "export default function mine() {}\n")
+    const previousKey = process.env.MERIDIAN_OPENCODE_ATTESTATION_KEY
+    process.env.MERIDIAN_OPENCODE_ATTESTATION_KEY = "not-a-key"
+    try {
+      expect(() => installPiExtension(PLUGIN_ROOT, agentDirectory)).toThrow(/meridian-extension-backup-/)
+    } finally {
+      if (previousKey === undefined) delete process.env.MERIDIAN_OPENCODE_ATTESTATION_KEY
+      else process.env.MERIDIAN_OPENCODE_ATTESTATION_KEY = previousKey
+    }
+    const [backup] = readdirSync(agentDirectory).filter(name => name.startsWith("meridian-extension-backup-"))
+    expect(readFileSync(join(agentDirectory, backup!, "index.ts"), "utf8")).toBe("export default function mine() {}\n")
+  })
+
   test("provisions the attestation key the extension signs with", () => {
     rmSync(priorityAttestationKeyPath(), { force: true })
     installPiExtension(PLUGIN_ROOT, agentDirectory)

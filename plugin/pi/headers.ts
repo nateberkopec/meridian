@@ -4,11 +4,11 @@ import { PRIORITY_ATTESTATION_HEADER, createPriorityAttestation } from "../prior
 
 export const PI_AGENT_ID = "pi"
 /**
- * `x-meridian-source` for a side call. A `fork-` source keeps it out of the
- * primary conversation without selecting the subagent tier: a compaction
- * request carries the history it summarizes, so it needs the same context
- * window as the conversation (1M for Opus and Fable, whose subagent tier is
- * 200k).
+ * `x-meridian-source` for a side call, which Pi already keys apart from the
+ * conversation. Like any source it is never signed. A `fork-` source avoids
+ * the subagent tier: a compaction request carries the history it summarizes,
+ * so it needs the conversation's context window (1M for Opus and Fable, whose
+ * subagent tier is 200k).
  */
 export const SIDE_CALL_SOURCE = "fork-side-call"
 const CHILD_SOURCE = "subagent-child"
