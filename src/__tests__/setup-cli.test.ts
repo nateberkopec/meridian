@@ -133,3 +133,60 @@ describe("meridian setup CLI", () => {
     expect(() => readFileSync(configPath, "utf8")).toThrow()
   })
 })
+
+describe("meridian setup --client", () => {
+  let root: string
+  let agentDir: string
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "meridian-setup-client-test-"))
+    agentDir = join(root, "pi-agent")
+  })
+
+  afterEach(() => rmSync(root, { recursive: true, force: true }))
+
+  function runSetup(args: string[]) {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      FORCE_COLOR: "0",
+      PI_CODING_AGENT_DIR: agentDir,
+      MERIDIAN_CONFIG_DIR: join(root, "meridian-config"),
+      OPENCODE_CONFIG_DIR: join(root, "opencode-config"),
+    }
+    delete env.MERIDIAN_OPENCODE_ATTESTATION_KEY
+    return spawnSync(process.execPath, [cliPath, "setup", ...args], {
+      cwd: repoRoot,
+      env,
+      encoding: "utf8",
+      timeout: 30_000,
+      windowsHide: true,
+    })
+  }
+
+  for (const args of [["--client", "pi"], ["--client=pi"]]) {
+    test(`installs the Pi extension for ${args.join(" ")}`, () => {
+      const result = runSetup(args)
+
+      expect(result.status).toBe(0)
+      expect(readFileSync(join(agentDir, "extensions", "meridian", "index.ts"), "utf8"))
+        .toBe('export { default } from "./pi/index"\n')
+    })
+  }
+
+  for (const args of [["--client", "foo"], ["--client=foo"], ["--client"]]) {
+    test(`rejects ${args.join(" ")} without installing anything`, () => {
+      const result = runSetup(args)
+
+      expect(result.status).toBe(1)
+      expect(result.stderr).toContain("Choose --client opencode or --client pi")
+      expect(() => readFileSync(join(agentDir, "extensions", "meridian", "index.ts"))).toThrow()
+    })
+  }
+
+  test("rejects OpenCode generation flags for Pi", () => {
+    const result = runSetup(["--client", "pi", "--v2"])
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain("only apply to --client opencode")
+  })
+})

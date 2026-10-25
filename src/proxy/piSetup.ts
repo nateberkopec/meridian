@@ -32,9 +32,19 @@ export class UnsupportedPiVersionError extends Error {
   }
 }
 
-/** Pi's agent directory: `PI_CODING_AGENT_DIR`, otherwise `~/.pi/agent`. */
-export function piAgentDirectory(env: NodeJS.ProcessEnv = process.env): string {
-  return resolve(env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent"))
+/**
+ * Pi's agent directory: `PI_CODING_AGENT_DIR`, otherwise `~/.pi/agent`. Pi
+ * expands a leading `~` in the variable itself, so a literal `~/…` (common in
+ * launchd plists and env files) must name the same directory here.
+ */
+export function piAgentDirectory(env: NodeJS.ProcessEnv = process.env, home: string = homedir()): string {
+  const configured = env.PI_CODING_AGENT_DIR
+  if (!configured) return join(home, ".pi", "agent")
+  if (configured === "~") return home
+  if (configured.startsWith("~/") || (process.platform === "win32" && configured.startsWith("~\\"))) {
+    return join(home, configured.slice(2))
+  }
+  return resolve(configured)
 }
 
 export function piExtensionDirectory(agentDirectory: string = piAgentDirectory()): string {

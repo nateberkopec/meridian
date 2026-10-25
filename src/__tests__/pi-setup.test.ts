@@ -47,6 +47,12 @@ describe("Pi setup paths", () => {
     expect(piExtensionDirectory("/tmp/pi-agent")).toBe("/tmp/pi-agent/extensions/meridian")
   })
 
+  test("expands a leading ~ in PI_CODING_AGENT_DIR the way Pi does", () => {
+    expect(piAgentDirectory({ PI_CODING_AGENT_DIR: "~/pi-agent" }, "/home/u")).toBe(join("/home/u", "pi-agent"))
+    expect(piAgentDirectory({ PI_CODING_AGENT_DIR: "~" }, "/home/u")).toBe("/home/u")
+    expect(piAgentDirectory({ PI_CODING_AGENT_DIR: "pi-~agent" }, "/home/u")).toBe(resolve("pi-~agent"))
+  })
+
   test("finds the shipped plugin directory from the source and the npm entry points", () => {
     expect(findPluginRoot(pathToFileURL(join(REPO, "bin", "cli.ts")).href)).toBe(PLUGIN_ROOT)
     expect(findPluginRoot(pathToFileURL(join(REPO, "dist", "cli.js")).href)).toBe(PLUGIN_ROOT)

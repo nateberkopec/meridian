@@ -126,7 +126,10 @@ if (args[0] === "setup" && args.includes("--antigravity")) {
 let setupClient: "opencode" | "pi" | undefined
 if (args[0] === "setup") {
   const clientIndex = args.indexOf("--client")
-  const client = clientIndex >= 0 ? args[clientIndex + 1] : "opencode"
+  const inlineClient = args.find(arg => arg.startsWith("--client="))
+  const client = inlineClient !== undefined
+    ? inlineClient.slice("--client=".length)
+    : clientIndex >= 0 ? args[clientIndex + 1] : "opencode"
   if (client !== "opencode" && client !== "pi") {
     console.error("Choose --client opencode or --client pi")
     process.exit(1)
