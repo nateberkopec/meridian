@@ -6,7 +6,7 @@
  */
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { Hono } from "hono"
-import type { Model, ModelsPublication, ModelsStoreEntry, RefreshModelsContext, SimpleStreamOptions } from "@earendil-works/pi-ai"
+import type { Model, ModelsPublication, ModelsStoreEntry, RefreshModelsContext, SimpleStreamOptions, SystemMessage } from "@earendil-works/pi-ai"
 import { normalizeContext } from "@earendil-works/pi-ai/utils/transcript"
 import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-agent"
 import meridian from "../../plugin/pi/index"
@@ -143,7 +143,7 @@ describe("Pi extension request identity", () => {
   test("tiers a pi-subagents agent by its active-agent prompt marker", () => {
     const marked = (content: string | { type: "text"; text: string }[]) =>
       sent(shape({ sessionId: SESSION }, { session: rootSession() }, normalizeContext({
-        messages: [{ role: "system", content, timestamp: 0 } as any],
+        messages: [{ role: "system", content, timestamp: 0 } satisfies SystemMessage],
       })))["x-meridian-source"]
     expect(marked('<active_agent name="worker"/>\nDo the work')).toBe("subagent-worker")
     expect(marked([{ type: "text", text: '<active_agent name="re\u200bviewer"/>' }])).toBe("subagent-reviewer")
