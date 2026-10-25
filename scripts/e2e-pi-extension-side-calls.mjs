@@ -159,7 +159,7 @@ assert(compaction.length >= 1, "compaction sent a request")
 for (const request of compaction) {
   assert.equal(request.agent, "pi")
   assert.notEqual(request.affinity, sessionId, "compaction is keyed apart from the conversation")
-  assert.equal(request.source, "subagent-generate", "compaction gets the base tier")
+  assert.equal(request.source, "fork-side-call", "compaction is marked independent")
   assert.equal(request.attestation, undefined, "compaction is never signed")
   assert.equal(request.unverifiedAttestation, false)
 }

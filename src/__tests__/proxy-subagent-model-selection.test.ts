@@ -77,6 +77,7 @@ installModelsMock(() => ({
 }))
 
 const { createProxyServer, clearSessionCache } = await import("../proxy/server")
+const { SIDE_CALL_SOURCE } = await import("../../plugin/pi/headers")
 
 function post(body: any, headers: Record<string, string> = {}) {
   const { app } = createProxyServer({ port: 0, host: "127.0.0.1" })
@@ -144,6 +145,17 @@ describe("Subagent model selection", () => {
       "x-meridian-source": "subagent-reviewer",
     })
     expect(capturedModel).toBe("opus")
+  })
+
+  it("keeps a Pi extension side call on the conversation's 1M tier", async () => {
+    // A compaction request carries the history it summarizes, so it must not
+    // fall to the 200k subagent tier of a 1M Opus conversation.
+    await post({ ...BASE_REQUEST, model: "claude-opus-4-6" }, {
+      "x-meridian-agent": "pi",
+      "x-session-affinity": "pi-compaction-session",
+      "x-meridian-source": SIDE_CALL_SOURCE,
+    })
+    expect(capturedModel).toBe("opus[1m]")
   })
 
   it("preserves the legacy OpenCode mode header on non-OpenCode adapters", async () => {

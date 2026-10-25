@@ -12,8 +12,8 @@
  * Key characteristics:
  * - User-Agent: claude-cli/<version> (mimics Claude Code) or default SDK UA
  * - With the Meridian Pi extension (plugin/pi): `x-session-affinity` from Pi's
- *   session ID, `x-meridian-source: subagent-*` for side calls and delegated
- *   children, and signed human-turn attestations. Without it: no session
+ *   session ID, `x-meridian-source: fork-side-call` for side calls and
+ *   `subagent-*` for delegated children, and signed human-turn attestations. Without it: no session
  *   header, so continuity relies on the fingerprint-based session cache
  * - CWD in system prompt: "Current working directory: /path/to/project"
  * - 7 lowercase tools: read, write, edit, bash, grep, find, ls

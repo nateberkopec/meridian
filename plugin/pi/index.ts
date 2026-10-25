@@ -6,8 +6,8 @@
  * built-in Anthropic implementation. Requests carry the identity the Pi adapter
  * reads:
  *   1. Session affinity from Pi's own session ID (`x-session-affinity`)
- *   2. The base model tier for side calls and delegated children
- *      (`x-meridian-source: subagent-*`)
+ *   2. Side calls marked independent (`x-meridian-source: fork-side-call`), and
+ *      the base model tier for delegated children (`x-meridian-source: subagent-*`)
  *   3. A signed human-turn attestation for `next-user-turn` priority failback
  *
  * Install once:

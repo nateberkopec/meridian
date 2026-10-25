@@ -3,7 +3,14 @@ import type { ProviderHeaders, SimpleStreamOptions, TranscriptContext } from "@e
 import { PRIORITY_ATTESTATION_HEADER, createPriorityAttestation } from "../priority-attestation"
 
 export const PI_AGENT_ID = "pi"
-export const SIDE_CALL_SOURCE = "subagent-generate"
+/**
+ * `x-meridian-source` for a side call. A `fork-` source keeps it out of the
+ * primary conversation without selecting the subagent tier: a compaction
+ * request carries the history it summarizes, so it needs the same context
+ * window as the conversation (1M for Opus and Fable, whose subagent tier is
+ * 200k).
+ */
+export const SIDE_CALL_SOURCE = "fork-side-call"
 const CHILD_SOURCE = "subagent-child"
 
 /**
@@ -151,7 +158,8 @@ function humanTurnAttestation(
  * Every request is keyed by its own Pi session ID. A request whose session ID
  * is not the current session's (compaction, branch summaries, an extension's
  * one-shot call) is a side call: Pi already gives it a fresh session ID, and the
- * `subagent-generate` source gives it the base model tier. A source another
+ * `fork-side-call` source marks it independent of the conversation while
+ * keeping the conversation's model tier. A source another
  * extension declared from `before_provider_headers` wins; delegated children
  * are tiered through theirs.
  */

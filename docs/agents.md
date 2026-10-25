@@ -427,9 +427,11 @@ The extension registers a `meridian` provider next to Pi's built-in
 - keys every request by Pi's own session ID (`x-session-affinity`), so a
   resumed Pi session finds its backing conversation and a fork gets its own;
 - marks compaction, branch summaries and other side calls with
-  `x-meridian-source: subagent-generate`, which selects the base model tier
-  and keeps them out of the primary conversation;
-- tiers delegated children the same way: a child Pi process started with
+  `x-meridian-source: fork-side-call`, under their own session key, which keeps
+  them out of the primary conversation. They keep the conversation's model
+  tier: a compaction request carries the history it summarizes, so it needs
+  the same context window;
+- gives delegated children the base model tier: a child Pi process started with
   `MERIDIAN_SOURCE=subagent-<name>` in its environment, or with pi-subagents'
   `PI_SUBAGENT_CHILD=1`, sends that source on every request, and in-process
   pi-subagents agents are recognized by their `<active_agent name="…"/>` prompt

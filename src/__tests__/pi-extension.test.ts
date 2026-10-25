@@ -110,10 +110,10 @@ describe("Pi extension request identity", () => {
     expect(first).not.toBe(second)
   })
 
-  test("gives a side call with its own session ID the base tier under that ID", async () => {
+  test("marks a side call with its own session ID independent under that ID", async () => {
     const headers = sent(shape({ sessionId: "compaction-session" }))
     expect(headers["x-session-affinity"]).toBe("compaction-session")
-    expect(headers["x-meridian-source"]).toBe("subagent-generate")
+    expect(headers["x-meridian-source"]).toBe("fork-side-call")
     expect(headers[PRIORITY_ATTESTATION_HEADER]).toBeUndefined()
     expect(await readWithAdapter(headers, c => piAdapter.getSessionId(c))).toBe("compaction-session")
   })
@@ -449,7 +449,7 @@ describe("Pi extension requests on the wire", () => {
     expect(primary!.has("x-meridian-source")).toBe(false)
     expect(verifyPriorityAttestation(primary!.get(PRIORITY_ATTESTATION_HEADER) ?? undefined, KEY)?.generation).toBe("pi1")
     expect(sideCall!.get("x-session-affinity")).toBe("side-session")
-    expect(sideCall!.get("x-meridian-source")).toBe("subagent-generate")
+    expect(sideCall!.get("x-meridian-source")).toBe("fork-side-call")
     expect(sideCall!.has(PRIORITY_ATTESTATION_HEADER)).toBe(false)
   })
 })

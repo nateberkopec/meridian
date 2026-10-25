@@ -9,7 +9,7 @@ Two harnesses use the actual Pi CLI with the extension that
   primary request must carry Pi's own session ID as `x-session-affinity`, no
   `x-meridian-source` and a `pi1` attestation that Meridian verifies for that
   session, with a distinct turn per prompt. Every compaction request must carry
-  a fresh session key, `x-meridian-source: subagent-generate` and no
+  a fresh session key, `x-meridian-source: fork-side-call` and no
   attestation.
 - `bun scripts/e2e-pi-extension.mjs --pi=<pi>` runs Pi print mode through an
   in-process Meridian and real Claude: a Haiku tool loop, a

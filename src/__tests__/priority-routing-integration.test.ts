@@ -914,18 +914,21 @@ describe("priority routing", () => {
     process.env.MERIDIAN_PRIORITY_FAILBACK = "next-user-turn"
     const app = createTestApp()
     await assignPiToFallback(app, "pi-source-session")
-    const headers = {
-      ...trustedPiTurnHeaders("pi-source-session", "e5f6a7b8"),
-      "x-meridian-source": "subagent-generate",
+
+    for (const source of ["fork-side-call", "subagent-child"]) {
+      const headers = {
+        ...trustedPiTurnHeaders("pi-source-session", "e5f6a7b8"),
+        "x-meridian-source": source,
+      }
+
+      // When
+      const response = await post(app, headers, CONTINUED_AFTER_PERSONAL)
+      const body = await response.text()
+
+      // Then
+      expect(body).toContain("prof-personal")
+      expect(capturedEnvs.every(dir => dir.includes("prof-personal"))).toBe(true)
     }
-
-    // When
-    const response = await post(app, headers, CONTINUED_AFTER_PERSONAL)
-    const body = await response.text()
-
-    // Then
-    expect(body).toContain("prof-personal")
-    expect(capturedEnvs.every(dir => dir.includes("prof-personal"))).toBe(true)
   })
 
   it("does not accept a Pi attestation for an OpenCode session, or the reverse", async () => {
