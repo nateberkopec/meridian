@@ -66,6 +66,14 @@ bridge for an HTTP TLS-termination hop that preserves public Host/port
 (including explicit default 443). Foreign/opaque/malformed origins and
 different ports are rejected; forwarding headers confer no trust.
 
+The Pi extension (#1408, owner-approved) adds three client contracts: the
+`pi1` generation on the existing `x-meridian-opencode-turn` header, signed with
+the same `opencode-turn.key`/`MERIDIAN_OPENCODE_ATTESTATION_KEY` and accepted
+only by the Pi adapter (OpenCode rejects it, and Pi rejects OpenCode
+generations); `plugin.pi` (`"configured"`/`"not-configured"`) beside
+`plugin.opencode` in `/health`; and `MERIDIAN_SOURCE` in a child Pi process's
+environment, which the extension sends as `x-meridian-source`.
+
 Antigravity additionally accepts `statePath`, `plugins` and `pluginPaths` under its
 backend options. These are provider-specific and do not change Claude plugin
 contracts. Persistence is opt-in and bounded; background jobs are not restart

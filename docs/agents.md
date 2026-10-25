@@ -436,10 +436,10 @@ The extension registers a `meridian` provider next to Pi's built-in
   `PI_SUBAGENT_CHILD=1`, sends that source on every request, and in-process
   pi-subagents agents are recognized by their `<active_agent name="…"/>` prompt
   marker;
-- signs each visible human turn of a root conversation, so
+- signs the latest user message of a root conversation, so
   [`next-user-turn` priority failback](profiles.md) can move it back to the
-  preferred profile. Forks, children, side calls and requests with an explicit
-  `x-meridian-profile` are never signed.
+  preferred profile. Saved forks, children, side calls and requests with an
+  explicit `x-meridian-profile` are never signed.
 
 Configuration:
 
@@ -452,6 +452,23 @@ Configuration:
 
 Pi runs in passthrough mode — it executes its own tools and Meridian just
 forwards the `tool_use` blocks. Opt out with `MERIDIAN_PASSTHROUGH=0`.
+
+Known limits:
+
+- Pi refreshes the catalog only in interactive and RPC modes. `pi -p` uses the
+  stored catalog for up to seven days, so start Pi interactively once to pick
+  up new Meridian models sooner.
+- A child that runs on the base tier still sees each model's full context
+  window in the catalog. With Opus and Fable, whose base tier is 200k, a long
+  child conversation can overflow before Pi compacts it.
+- A user message another extension adds (for example with
+  `pi.sendUserMessage()`) is signed like one you typed. Forks and clones of an
+  unsaved (`--no-session`) session have no parent on record, so they are
+  signed as root conversations.
+- Pi's `/bug` summary reuses the conversation's session ID. Meridian treats it
+  as a turn of that conversation, and the next real turn replays the history.
+- The extension always sends `x-meridian-agent: pi`, so it cannot select a
+  custom Pi-based [adapter instance](#adapter-instances).
 
 #### Moving from the `models.json` setup
 

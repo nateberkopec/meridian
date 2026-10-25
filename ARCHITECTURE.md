@@ -75,6 +75,10 @@ server orchestration. The build packages self-contained retry integrations under
 `dist/antigravity-clients`; npm, Nix and Docker installations carry those assets.
 Setup prepares edits before writing, preserves unrelated settings, rejects malformed
 or conflicting input, creates private backups and uses per-file atomic replacement.
+`piSetup.ts` owns `meridian setup --client pi`: it copies the TypeScript Pi
+extension from `plugin/pi/` (with the shared `plugin/priority-attestation.ts`
+signer) into Pi's `extensions/meridian/`, replacing only a copy Meridian wrote,
+and provides the startup, `/health` and pluginless-request checks.
 `chatgpt/migrate/` implements `meridian chatgpt-migrate`: credential discovery
 (`sources.ts`), /proc scanning (`processes.ts`), opencode config resolution and
 jsonc editing (`opencodeConfig.ts`), stripping under oc-codex-multi-auth's own
@@ -287,7 +291,9 @@ src/
 
 plugin/                       ← Repository root, alongside src/
 ├── meridian.ts               ← OpenCode V1 session header plugin
-└── meridian-v2.ts            ← OpenCode V2 plugin
+├── meridian-v2.ts            ← OpenCode V2 plugin
+├── priority-attestation.ts   ← Client-side human-turn signer (OpenCode and Pi)
+└── pi/                       ← Pi extension: meridian provider, catalog, request identity
 ```
 
 ## Dependency Rules
