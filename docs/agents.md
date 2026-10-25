@@ -413,6 +413,11 @@ Setup copies the extension to `~/.pi/agent/extensions/meridian` (or
 `opencode-turn.key`. Rerun it after upgrading Meridian; startup warns when the
 installed copy is missing or differs from the one Meridian ships. Restart Pi or
 run `/reload`, then pick a model under the `meridian` provider with `/model`.
+If a directory Meridian did not install is already at that path, setup moves it
+to `~/.pi/agent/meridian-extension-backup-*` and prints where.
+
+Always name the provider (`meridian/claude-sonnet-5-5`). Pi 1.3 rejects a bare
+model ID that more than one authenticated provider offers.
 
 The extension registers a `meridian` provider next to Pi's built-in
 `anthropic` provider, so direct Anthropic models stay available. It:
@@ -446,10 +451,26 @@ Configuration:
 Pi runs in passthrough mode — it executes its own tools and Meridian just
 forwards the `tool_use` blocks. Opt out with `MERIDIAN_PASSTHROUGH=0`.
 
+#### Moving from the `models.json` setup
+
+Earlier Meridian docs pointed Pi's built-in `anthropic` provider at Meridian.
+That keeps working after you install the extension, but those requests still
+go out without the extension's session identity, and the same model IDs then
+exist under both `anthropic` and `meridian`. To switch:
+
+1. Remove the `anthropic` `baseUrl` override from `~/.pi/agent/models.json`, and
+   any `ANTHROPIC_BASE_URL` you export for Pi, unless you want both routes.
+2. Remove any extension of your own that sets `x-session-affinity` or
+   `x-meridian-agent` for the `anthropic` provider; the Meridian extension does
+   this for its own provider.
+3. Set `"defaultProvider": "meridian"` in `~/.pi/agent/settings.json`, or pick
+   a `meridian/…` model with `/model`. A resumed session keeps the model it was
+   using until you switch it.
+
 #### Without the extension
 
-Older Pi releases (before 1.0) can point the built-in `anthropic` provider at
-Meridian in `~/.pi/agent/models.json`:
+Pi releases before 1.0, which cannot load the extension, can point the built-in
+`anthropic` provider at Meridian in `~/.pi/agent/models.json`:
 
 ```json
 {
