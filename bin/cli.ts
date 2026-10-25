@@ -164,6 +164,7 @@ if (setupClient === "pi") {
   const result = installPiExtension(findPluginRoot(import.meta.url))
   console.log(`\x1b[32m✓ Meridian extension ${result.replaced ? "updated" : "installed"} for Pi${piVersion ? ` ${piVersion}` : ""}\x1b[0m`)
   console.log(`  Extension: ${result.extensionPath}`)
+  if (result.backupPath) console.log(`  Backup: ${result.backupPath} (the directory that was there was not Meridian's)`)
   console.log("\nRestart Pi or run /reload, then pick a model under the meridian provider with /model.")
   process.exit(0)
 }

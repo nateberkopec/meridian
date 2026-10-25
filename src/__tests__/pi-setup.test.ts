@@ -84,14 +84,32 @@ describe("Pi extension installation", () => {
     }
   })
 
-  test("replaces whatever was installed before", () => {
+  test("replaces an earlier Meridian copy wholesale", () => {
+    installPiExtension(PLUGIN_ROOT, agentDirectory)
+    const target = piExtensionDirectory(agentDirectory)
+    writeFileSync(join(target, "pi", "leftover.ts"), "stale\n")
+    writeFileSync(join(target, "pi", "headers.ts"), "// edited\n")
+
+    const result = installPiExtension(PLUGIN_ROOT, agentDirectory)
+    expect(result).toEqual({ extensionPath: target, replaced: true })
+    expect(existsSync(join(target, "pi", "leftover.ts"))).toBe(false)
+    expect(isPiExtensionOutdated(PLUGIN_ROOT, agentDirectory)).toBe(false)
+    expect(readdirSync(agentDirectory).filter(name => name.startsWith("meridian-extension-backup-"))).toEqual([])
+  })
+
+  test("moves a directory Meridian did not install aside instead of deleting it", () => {
     const target = piExtensionDirectory(agentDirectory)
     mkdirSync(target, { recursive: true })
-    writeFileSync(join(target, "index.ts"), "export default function old() {}\n")
-    writeFileSync(join(target, "leftover.ts"), "stale\n")
+    writeFileSync(join(target, "index.ts"), "export default function mine() {}\n")
+    writeFileSync(join(target, "notes.md"), "keep me\n")
 
-    expect(installPiExtension(PLUGIN_ROOT, agentDirectory).replaced).toBe(true)
-    expect(existsSync(join(target, "leftover.ts"))).toBe(false)
+    const result = installPiExtension(PLUGIN_ROOT, agentDirectory)
+    expect(result.replaced).toBe(true)
+    expect(result.backupPath).toBeDefined()
+    expect(dirname(result.backupPath!)).toBe(agentDirectory)
+    expect(readFileSync(join(result.backupPath!, "index.ts"), "utf8")).toBe("export default function mine() {}\n")
+    expect(readFileSync(join(result.backupPath!, "notes.md"), "utf8")).toBe("keep me\n")
+    expect(existsSync(join(target, "notes.md"))).toBe(false)
     expect(isPiExtensionOutdated(PLUGIN_ROOT, agentDirectory)).toBe(false)
   })
 

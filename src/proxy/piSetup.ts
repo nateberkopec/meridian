@@ -96,6 +96,17 @@ export function assertSupportedPiVersion(version: string | undefined): void {
 export interface PiSetupResult {
   extensionPath: string
   replaced: boolean
+  /** Where a directory Meridian did not install was moved, if there was one. */
+  backupPath?: string
+}
+
+/** True when `directory` holds a copy this installer wrote: its entry point is Meridian's. */
+function isMeridianInstalledCopy(directory: string): boolean {
+  try {
+    return readFileSync(join(directory, "index.ts"), "utf8") === ENTRY_POINT
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -103,8 +114,10 @@ export interface PiSetupResult {
  *
  * The new copy is staged in the agent directory, outside `extensions/` so a Pi
  * starting meanwhile cannot load it, and swapped in by rename, so an
- * interrupted setup never leaves Pi a half-written extension. Whatever was in
- * that directory before is replaced.
+ * interrupted setup never leaves Pi a half-written extension. A previous
+ * Meridian copy is replaced wholesale. Anything else at that path is the
+ * user's own and is moved beside `extensions/`, where Pi does not load it,
+ * rather than deleted.
  */
 export function installPiExtension(
   pluginRoot: string,
@@ -120,10 +133,17 @@ export function installPiExtension(
       writeFileSync(join(staging, path), contents)
     }
     const replaced = existsSync(target)
-    rmSync(target, { recursive: true, force: true })
+    let backupPath: string | undefined
+    if (replaced && !isMeridianInstalledCopy(target)) {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-")
+      backupPath = join(agentDirectory, `meridian-extension-backup-${stamp}-${randomUUID().slice(0, 8)}`)
+      renameSync(target, backupPath)
+    } else {
+      rmSync(target, { recursive: true, force: true })
+    }
     renameSync(staging, target)
     ensurePriorityAttestationKey()
-    return { extensionPath: target, replaced }
+    return backupPath ? { extensionPath: target, replaced, backupPath } : { extensionPath: target, replaced }
   } finally {
     rmSync(staging, { recursive: true, force: true })
   }
