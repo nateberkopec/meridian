@@ -1,3 +1,39 @@
+## Pi extension (#1408)
+
+Two harnesses use the actual Pi CLI with the extension that
+`meridian setup --client pi` installs into a scratch `PI_CODING_AGENT_DIR`:
+
+- `bun scripts/e2e-pi-extension-side-calls.mjs --pi=<pi>` needs no
+  credentials. It drives Pi's RPC mode against a recording stub with canned SSE
+  replies, through two prompts, a manual `compact` and a third prompt. Each
+  primary request must carry Pi's own session ID as `x-session-affinity`, no
+  `x-meridian-source` and a `pi1` attestation that Meridian verifies for that
+  session, with a distinct turn per prompt. Every compaction request must carry
+  a fresh session key, `x-meridian-source: subagent-generate` and no
+  attestation.
+- `bun scripts/e2e-pi-extension.mjs --pi=<pi>` runs Pi print mode through an
+  in-process Meridian and real Claude: a Haiku tool loop, a
+  `MERIDIAN_SOURCE=subagent-e2e` child and Opus 5.5 at high effort. It asserts
+  model discovery, the wire identity and Meridian's adapter/source telemetry,
+  and reports generation separately.
+
+Pass the Pi executable explicitly. A version manager can select a
+project-local Pi from the working directory. Run under a qualified SQLite
+runtime (see `src/proxy/session/bookkeeping/nativeDatabase.ts`).
+
+Recorded 2026-10-25 on Darwin arm64, Bun 1.3.14, Node 22.22.3: the side-call
+harness passed on Pi 1.4.0 and 1.3.0, with two compaction requests each. The
+Claude harness passed every identity assertion on Pi 1.4.0. Discovery returned
+twelve models, Meridian selected the `pi` adapter and recorded
+`subagent-e2e`, and all primary attestations verified. Claude refused all three
+generations with an Extra Usage billing error. Paid Extra Usage stayed off.
+Unchanged main refuses the same Pi request through the built-in `anthropic`
+provider, and a plain request through the same server succeeds, so the refusal
+predates the extension. Generation, resume continuity, in-process
+pi-subagents and a live `next-user-turn` promotion remain unqualified on that
+account. The promotion path is covered by
+`src/__tests__/priority-routing-integration.test.ts`.
+
 ## Awaited session-cache cleanup (#1244/#1277)
 
 Run `bun test src/__tests__/session-cache-clear-completion.test.ts` with a
