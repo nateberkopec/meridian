@@ -103,11 +103,11 @@
     "meridian-plugin-opencode-scrub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790238684,
-        "narHash": "sha256-dbjnY7Y1vU6i37/90qhUnw5jnVDg0rK4tzCKhalLvQE=",
+        "lastModified": 1793044188,
+        "narHash": "sha256-WSMyEpGrBLAu8NTNazTEjG/VbFgN+BDjcFk9N1obW+A=",
         "owner": "rynfar",
         "repo": "meridian-plugin-opencode-scrub",
-        "rev": "4b410c5a04470f7daa0f61ad0e50a6e3f0205f5c",
+        "rev": "798071b48b30b98c5d3cc13784d3b7a294d215a6",
         "type": "github"
       },
       "original": {
@@ -119,11 +119,11 @@
     "meridian-plugin-pi-scrub": {
       "flake": false,
       "locked": {
-        "lastModified": 1790238609,
-        "narHash": "sha256-HLcZUm2eukYxmlCVD/E+rpnvtfe26ktJZHKS1Q8orDA=",
+        "lastModified": 1793044197,
+        "narHash": "sha256-nZBnunLHjqV0JS/BgUOyXFCQ2Fdjcd/pNEtEIo/h9A4=",
         "owner": "rynfar",
         "repo": "meridian-plugin-pi-scrub",
-        "rev": "23c98fac6c2a188ec2ab46c52942677b918d65f5",
+        "rev": "09c4b53a0dc0194e037a0953a1d5ee321a6349c3",
         "type": "github"
       },
       "original": {
