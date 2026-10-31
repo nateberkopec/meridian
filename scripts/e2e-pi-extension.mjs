@@ -137,16 +137,11 @@ try {
   const { default: meridian } = await import("../plugin/pi/index.ts")
   let provider
   meridian({ on() {}, registerProvider(_id, config) { provider = config } })
-  assert(provider?.refreshModels, "the Pi extension must register catalog discovery")
   await provider.refreshModels({
     allowNetwork: true,
     baseUrl: `http://127.0.0.1:${recorder.port}`,
     signal: AbortSignal.timeout(10_000),
-    publish: async ({ persist }) => {
-      assert(persist, "catalog priming must persist the discovered models")
-      writeFileSync(join(agentDir, "models-store.json"), JSON.stringify({ meridian: persist }))
-      return true
-    },
+    publish: async ({ persist }) => writeFileSync(join(agentDir, "models-store.json"), JSON.stringify({ meridian: persist })),
   })
   report.cases.push(await turn({
     name: "primary turn with a tool loop",

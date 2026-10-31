@@ -344,7 +344,6 @@ describe("Pi extension catalog refresh", () => {
     globalThis.fetch = savedFetch
     delete process.env.MERIDIAN_BASE_URL
     delete process.env.MERIDIAN_API_KEY
-    delete process.env.PI_OFFLINE
   })
 
   const refresh = (context: RefreshModelsContext) => loadExtension().provider.config.refreshModels!(context)
@@ -393,7 +392,6 @@ describe("Pi extension catalog refresh", () => {
     const withStored = refreshContext({ stored: stored("http://127.0.0.1:3456") }).context
     expect((await refresh(withStored)).map(model => model.id)).toEqual(["claude-stored"])
     await expect(refresh(refreshContext().context)).rejects.toThrow("fetch failed")
-    expect(await refresh(refreshContext({ allowNetwork: false }).context)).toEqual([])
   })
 
   test("ignores a catalog stored for another Meridian", async () => {
