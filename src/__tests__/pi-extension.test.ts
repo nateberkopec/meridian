@@ -381,12 +381,11 @@ describe("Pi extension catalog refresh", () => {
     expect(published).toEqual([])
   })
 
-  test("discovers once on a cold start with nothing stored, unless Pi is offline", async () => {
-    expect((await refresh(refreshContext({ allowNetwork: false }).context)).length).toBeGreaterThan(0)
-    expect(requests).toHaveLength(1)
-    process.env.PI_OFFLINE = "1"
-    expect(await refresh(refreshContext({ allowNetwork: false }).context)).toEqual([])
-    expect(requests).toHaveLength(1)
+  test("does not discover on a cold start when Pi forbids network access", async () => {
+    const { context, published } = refreshContext({ allowNetwork: false })
+    expect(await refresh(context)).toEqual([])
+    expect(requests).toEqual([])
+    expect(published).toEqual([])
   })
 
   test("keeps the stored catalog when Meridian is down, and reports the outage only with nothing to show", async () => {
@@ -399,8 +398,8 @@ describe("Pi extension catalog refresh", () => {
 
   test("ignores a catalog stored for another Meridian", async () => {
     const { context } = refreshContext({ allowNetwork: false, stored: stored("http://127.0.0.1:3458") })
-    expect((await refresh(context)).some(model => model.id === "claude-stored")).toBe(false)
-    expect(requests).toHaveLength(1)
+    expect(await refresh(context)).toEqual([])
+    expect(requests).toEqual([])
   })
 
   test("uses Pi's models.json base URL over MERIDIAN_BASE_URL, normalized", async () => {
@@ -414,10 +413,10 @@ describe("Pi extension catalog refresh", () => {
     expect(models.every(model => model.baseUrl === "http://127.0.0.1:3458")).toBe(true)
   })
 
-  test("authenticates discovery with Pi's resolved credential, or MERIDIAN_API_KEY on a cold start", async () => {
+  test("authenticates permitted discovery with Pi's resolved credential, or MERIDIAN_API_KEY", async () => {
     await refresh(refreshContext({ credential: { type: "api_key", key: "from-pi" } }).context)
     process.env.MERIDIAN_API_KEY = "from-env"
-    await refresh(refreshContext({ allowNetwork: false }).context)
+    await refresh(refreshContext().context)
     expect(requests.map(request => request.apiKey)).toEqual(["from-pi", "from-env"])
   })
 })
